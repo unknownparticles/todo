@@ -10,14 +10,18 @@ export class GLMService extends BaseAIService {
         const completed = tasks.filter(t => t.completed);
 
         const prompt = `
-      The user is ending their day. 
-      Completed tasks: ${completed.length}
-      Unfinished tasks: ${unfinished.length}
-      Unfinished task list: ${unfinished.map(t => t.text).join(', ')}
+      用户当天的任务执行情况如下:
+      总计任务: ${tasks.length}
+      已完成: ${completed.length}
+      未完成: ${unfinished.length}
+      未完成列表: ${unfinished.map(t => t.text).join(', ')}
       
-      Provide a concise, encouraging review (2-3 sentences). 
-      If there are unfinished tasks, gently suggest how to tackle them tomorrow. 
-      Keep it motivational and professional. Respond in Chinese (Simplified).
+      请以此为据进行智能分析:
+      1. 任务评价: 对已完成的工作给予肯定或客观评价。
+      2. 进度分析: 分析当前任务分配的合理性或紧迫度。
+      3. 安排建议: 针对未完成任务，给出接下来的行动建议或明天的安排。
+      
+      要求: 语气极简、专业且有启发性。总字数控制在 100 字以内。必须使用中文回答。
     `;
 
         try {

@@ -71,8 +71,8 @@ const Pomodoro: React.FC<PomodoroProps> = ({ focusedTarget, settings, onSessionC
   };
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-12 p-10 bg-surface border border-main/5 rounded-[3rem] w-full max-w-sm mx-auto relative overflow-hidden transition-all duration-500 shadow-sm">
-      <button 
+    <div className="flex flex-col items-center justify-start space-y-8 p-8 bg-surface border border-main/5 rounded-[3rem] w-full max-w-sm mx-auto relative overflow-hidden transition-all duration-500 shadow-sm">
+      <button
         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
         className="absolute top-8 right-8 p-2 text-muted/30 hover:text-brand-primary transition-colors"
       >
@@ -84,8 +84,8 @@ const Pomodoro: React.FC<PomodoroProps> = ({ focusedTarget, settings, onSessionC
           <h3 className="text-xs font-black text-main uppercase tracking-[0.3em] text-center">时长偏好</h3>
           <div className="space-y-3">
             {[
-              { mode: TimerMode.WORK, label: '专注', color: 'text-brand-primary' }, 
-              { mode: TimerMode.SHORT_BREAK, label: '短休', color: 'text-brand-secondary' }, 
+              { mode: TimerMode.WORK, label: '专注', color: 'text-brand-primary' },
+              { mode: TimerMode.SHORT_BREAK, label: '短休', color: 'text-brand-secondary' },
               { mode: TimerMode.LONG_BREAK, label: '长休', color: 'text-main' }
             ].map(item => (
               <div key={item.mode} className="flex items-center justify-between bg-main/5 p-4 rounded-2xl">

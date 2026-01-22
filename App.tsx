@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const [isReviewLoading, setIsReviewLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [lastAnalyzedState, setLastAnalyzedState] = useState<string>(() => localStorage.getItem('zenflow_last_analyzed') || '');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -84,6 +85,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('zenflow_ai_settings', JSON.stringify(aiSettings));
   }, [aiSettings]);
+
+  useEffect(() => {
+    localStorage.setItem('zenflow_last_analyzed', lastAnalyzedState);
+  }, [lastAnalyzedState]);
 
   useEffect(() => {
     const handler = (e: any) => { e.preventDefault(); setInstallPrompt(e); };
@@ -150,6 +155,17 @@ const App: React.FC = () => {
   };
 
   const triggerReview = async () => {
+    if (tasks.length === 0) {
+      setAiReview("当前还没有待办任务，先写下你的目标吧！");
+      return;
+    }
+
+    const currentState = JSON.stringify(tasks.map(t => ({ id: t.id, text: t.text, completed: t.completed })));
+    if (currentState === lastAnalyzedState && aiReview) {
+      setAiReview("任务状态未变更，无需重复分析。继续加油！");
+      return;
+    }
+
     setIsReviewLoading(true);
     const service = getAIService(aiSettings);
     if (!service) {
@@ -159,6 +175,7 @@ const App: React.FC = () => {
     }
     const review = await service.getEndDayReview(tasks);
     setAiReview(review);
+    setLastAnalyzedState(currentState);
     setIsReviewLoading(false);
   };
 
@@ -212,7 +229,7 @@ const App: React.FC = () => {
 
       <main className="flex-1">
         {activeTab === 'todo' && <TodoList tasks={tasks} onAddTask={addTask} onToggleTask={toggleTask} onDeleteTask={deleteTask} onAddSubtask={addSubtask} onToggleSubtask={toggleSubtask} onClearCompleted={clearCompletedTasks} onSetFocus={(t) => { setFocusTarget(t); setActiveTab('pomodoro'); }} />}
-        {activeTab === 'pomodoro' && <div className="py-6"><Pomodoro focusedTarget={focusTarget} settings={timerSettings} onSettingsChange={setTimerSettings} onSessionComplete={handleSessionComplete} /></div>}
+        {activeTab === 'pomodoro' && <div className="pt-2 pb-6"><Pomodoro focusedTarget={focusTarget} settings={timerSettings} onSettingsChange={setTimerSettings} onSessionComplete={handleSessionComplete} /></div>}
         {activeTab === 'calendar' && <Calendar tasks={tasks} />}
         {activeTab === 'stats' && (
           <div className="space-y-6 pb-6">
