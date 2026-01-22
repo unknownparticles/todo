@@ -1,0 +1,5 @@
+{
+  "name": "ZenFlow: AI Todo & Pomodoro",
+  "description": "A minimalist, AI-powered productivity app featuring a smart todo list, Pomodoro timer, and daily completion insights.",
+  "requestFramePermissions": []
+}
