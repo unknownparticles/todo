@@ -18,7 +18,7 @@ export interface Task {
   priority: Priority;
   tags: string[];
   subtasks: Subtask[];
-  focusTime: number; 
+  focusTime: number;
 }
 
 export type FocusTarget = {
@@ -29,7 +29,7 @@ export type FocusTarget = {
 };
 
 export interface SessionHistory {
-  date: string; 
+  date: string;
   minutes: number;
   tasksCompleted: number;
 }
@@ -51,4 +51,17 @@ export interface TimerState {
   isActive: boolean;
   mode: TimerMode;
   sessionsCompleted: number;
+}
+export interface IAIService {
+  getEndDayReview(tasks: Task[]): Promise<string>;
+  getTaskPrioritySuggestion(tasks: Task[]): Promise<string[]>;
+}
+
+export type AIProvider = 'gemini' | 'deepseek' | 'glm';
+
+export interface AISettings {
+  provider: AIProvider;
+  geminiKey: string;
+  deepseekKey: string;
+  glmKey: string;
 }

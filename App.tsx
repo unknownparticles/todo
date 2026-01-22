@@ -4,8 +4,9 @@ import TodoList from './components/TodoList';
 import Pomodoro from './components/Pomodoro';
 import Calendar from './components/Calendar';
 import Statistics from './components/Statistics';
-import { Task, Priority, SessionHistory, TimerSettings, TimerMode, FocusTarget, AppTheme, AppMode } from './types';
-import { aiService } from './services/gemini';
+import { Task, Priority, SessionHistory, TimerSettings, TimerMode, FocusTarget, AppTheme, AppMode, AISettings, IAIService } from './types';
+import { getAIService } from './services/factory';
+import SettingsModal from './components/SettingsModal';
 
 type Tab = 'todo' | 'pomodoro' | 'calendar' | 'stats';
 
@@ -15,7 +16,7 @@ const App: React.FC = () => {
     let loadedTasks: Task[] = saved ? JSON.parse(saved) : [];
     const todayStr = new Date().toDateString();
     const lastVisit = localStorage.getItem('zenflow_last_visit');
-    
+
     if (lastVisit && lastVisit !== todayStr) {
       // 隔天自动清除所有已完成
       loadedTasks = loadedTasks.filter(t => !t.completed);
@@ -23,7 +24,7 @@ const App: React.FC = () => {
     localStorage.setItem('zenflow_last_visit', todayStr);
     return loadedTasks;
   });
-  
+
   const [history, setHistory] = useState<SessionHistory[]>(() => {
     const saved = localStorage.getItem('zenflow_history');
     return saved ? JSON.parse(saved) : [];
@@ -41,10 +42,21 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<AppTheme>(() => (localStorage.getItem('zenflow_theme') as AppTheme) || 'minimalist');
   const [mode, setMode] = useState<AppMode>(() => (localStorage.getItem('zenflow_mode') as AppMode) || 'light');
 
+  const [aiSettings, setAiSettings] = useState<AISettings>(() => {
+    const saved = localStorage.getItem('zenflow_ai_settings');
+    return saved ? JSON.parse(saved) : {
+      provider: 'gemini',
+      geminiKey: '',
+      deepseekKey: '',
+      glmKey: ''
+    };
+  });
+
   const [activeTab, setActiveTab] = useState<Tab>('todo');
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const [aiReview, setAiReview] = useState<string | null>(null);
   const [isReviewLoading, setIsReviewLoading] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -70,13 +82,17 @@ const App: React.FC = () => {
   }, [timerSettings]);
 
   useEffect(() => {
+    localStorage.setItem('zenflow_ai_settings', JSON.stringify(aiSettings));
+  }, [aiSettings]);
+
+  useEffect(() => {
     const handler = (e: any) => { e.preventDefault(); setInstallPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const addTask = (text: string, priority: Priority, tags: string[]) => {
-    setTasks([...tasks, { 
+    setTasks([...tasks, {
       id: crypto.randomUUID(), text, completed: false, createdAt: Date.now(),
       priority, tags, subtasks: [], focusTime: 0
     }]);
@@ -93,14 +109,14 @@ const App: React.FC = () => {
   };
 
   const addSubtask = (taskId: string, text: string) => {
-    setTasks(tasks.map(t => t.id === taskId ? { 
-      ...t, subtasks: [...t.subtasks, { id: crypto.randomUUID(), text, completed: false }] 
+    setTasks(tasks.map(t => t.id === taskId ? {
+      ...t, subtasks: [...t.subtasks, { id: crypto.randomUUID(), text, completed: false }]
     } : t));
   };
 
   const toggleSubtask = (taskId: string, subtaskId: string) => {
-    setTasks(tasks.map(t => t.id === taskId ? { 
-      ...t, subtasks: t.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st) 
+    setTasks(tasks.map(t => t.id === taskId ? {
+      ...t, subtasks: t.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st)
     } : t));
   };
 
@@ -135,7 +151,13 @@ const App: React.FC = () => {
 
   const triggerReview = async () => {
     setIsReviewLoading(true);
-    const review = await aiService.getEndDayReview(tasks);
+    const service = getAIService(aiSettings);
+    if (!service) {
+      setAiReview("请先在设置中配置并开启 AI 密钥。");
+      setIsReviewLoading(false);
+      return;
+    }
+    const review = await service.getEndDayReview(tasks);
     setAiReview(review);
     setIsReviewLoading(false);
   };
@@ -150,16 +172,23 @@ const App: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button 
+          <button
             onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
             className="w-10 h-10 flex items-center justify-center bg-surface border border-main/5 rounded-full text-main transition-transform active:scale-90"
             title="切换模式"
           >
             {mode === 'light' ? '🌙' : '☀️'}
           </button>
-          <button 
-            onClick={triggerReview} 
-            disabled={isReviewLoading} 
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="w-10 h-10 flex items-center justify-center bg-surface border border-main/5 rounded-full text-main active:scale-90"
+            title="AI 设置"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </button>
+          <button
+            onClick={triggerReview}
+            disabled={isReviewLoading}
             className="w-10 h-10 flex items-center justify-center bg-surface border border-main/5 rounded-full text-main active:scale-90"
             title="AI 每日总结"
           >
@@ -190,7 +219,7 @@ const App: React.FC = () => {
             <Statistics tasks={tasks} history={history} />
             <div className="mx-6 p-8 bg-surface rounded-[2rem] border border-main/5">
               <h3 className="text-sm font-bold text-main mb-6 flex items-center">
-                <span className="w-1 h-4 bg-brand-primary mr-2 rounded-full" /> 
+                <span className="w-1 h-4 bg-brand-primary mr-2 rounded-full" />
                 视觉主题
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -200,8 +229,8 @@ const App: React.FC = () => {
                   { id: 'business', label: '商务沉稳', desc: '高效利落', color: 'bg-blue-900' },
                   { id: 'nature', label: '简约自然', desc: '治愈森系', color: 'bg-emerald-700' }
                 ].map(t => (
-                  <button 
-                    key={t.id} 
+                  <button
+                    key={t.id}
                     onClick={() => setTheme(t.id as AppTheme)}
                     className={`flex items-center p-4 rounded-2xl transition-all border-2 ${theme === t.id ? 'border-brand-primary bg-brand-primary/5' : 'border-transparent bg-main/5 hover:bg-main/10'}`}
                   >
@@ -225,9 +254,9 @@ const App: React.FC = () => {
           { id: 'calendar', label: '日历', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
           { id: 'stats', label: '成就', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' }
         ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as Tab)} 
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as Tab)}
             className={`flex flex-col items-center py-2 px-5 rounded-full transition-all duration-300 ${activeTab === tab.id ? 'bg-brand-primary text-surface' : 'text-muted hover:text-main'}`}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon} /></svg>
@@ -235,6 +264,13 @@ const App: React.FC = () => {
           </button>
         ))}
       </nav>
+      {isSettingsOpen && (
+        <SettingsModal
+          settings={aiSettings}
+          onSave={setAiSettings}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 };

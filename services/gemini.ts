@@ -1,18 +1,19 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Task } from "../types";
+import { BaseAIService } from "./ai";
 
-export class AIService {
+export class GeminiService extends BaseAIService {
   private ai: GoogleGenAI;
 
-  constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  constructor(apiKey: string) {
+    super(apiKey);
+    this.ai = new GoogleGenAI(apiKey);
   }
 
   async getEndDayReview(tasks: Task[]): Promise<string> {
     const unfinished = tasks.filter(t => !t.completed);
     const completed = tasks.filter(t => t.completed);
-    
+
     const prompt = `
       The user is ending their day. 
       Completed tasks: ${completed.length}
@@ -51,7 +52,7 @@ export class AIService {
         }
       }
     });
-    
+
     try {
       return JSON.parse(response.text.trim());
     } catch {
@@ -59,5 +60,3 @@ export class AIService {
     }
   }
 }
-
-export const aiService = new AIService();
