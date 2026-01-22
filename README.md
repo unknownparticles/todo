@@ -1,20 +1,62 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ZenFlow AI - 极简专注
 
-# Run and deploy your AI Studio app
+极简 AI 待办与番茄钟应用，支持多 AI 提供商（Gemini、DeepSeek、ChatGLM）。
 
-This contains everything you need to run your app locally.
+## ✨ 功能特性
 
-View your app in AI Studio: https://ai.studio/apps/drive/1K72-H74D1j37KjXwM4B55AieZfwzvr3i
+- ✅ 任务管理（优先级、标签、子任务）
+- 🍅 番茄钟计时器（可自定义时长）
+- 📊 统计与生产力追踪
+- 🤖 AI 每日总结与任务优先级建议
+- 🎨 多主题切换（极简、青春、商务、自然）
+- 🌙 深色模式支持
+- 📱 PWA 支持，可安装到桌面
 
-## Run Locally
+## 🚀 本地开发
 
-**Prerequisites:**  Node.js
+**前置要求：** Node.js
 
+1. 安装依赖：
+   ```bash
+   npm install
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+2. 运行开发服务器：
+   ```bash
+   npm run dev
+   ```
+
+## 🌐 部署到 GitHub Pages
+
+### 方法一：GitHub Actions 自动部署（推荐）
+
+1. 在 GitHub 仓库设置中，进入 **Settings** → **Pages**
+2. 在 **Source** 下拉菜单中选择 **GitHub Actions**
+3. 推送代码到 `main` 分支，Actions 会自动构建并部署
+
+工作流文件已创建在 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+
+### 方法二：手动部署
+
+```bash
+npm run build
+# 将 dist 目录内容推送到 gh-pages 分支
+```
+
+## 🔑 AI 配置
+
+应用支持三种 AI 提供商：
+
+- **Gemini**：Google 的 Gemini API
+- **DeepSeek**：DeepSeek 聊天 API
+- **ChatGLM**：智谱 AI 的 GLM API
+
+在应用右上角点击"设置"图标（⚙️），输入对应的 API Key 即可使用 AI 功能。
+
+## 📦 技术栈
+
+- React 19
+- TypeScript
+- Vite
+- TailwindCSS
+- PWA (Service Worker + Manifest)
