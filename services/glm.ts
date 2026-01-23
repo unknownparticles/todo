@@ -71,4 +71,40 @@ export class GLMService extends BaseAIService {
             return unfinished.slice(0, 3);
         }
     }
+
+    async getSchulteFocusAnalysis(results: any[]): Promise<string> {
+        if (results.length === 0) return "暂无最近练习记录。";
+
+        const stats = results.map(r => `${new Date(r.timestamp).toLocaleDateString()} ${r.timeTaken}秒`).join('\n');
+        const prompt = `
+      用户最近的舒尔特方格练习记录如下:
+      ${stats}
+      
+      请分析用户的专注力状态:
+      1. 趋势分析: 时间是变快了还是变慢了？
+      2. 专注力评价: 根据时间判断当前的专注程度（平均 20-30 秒为优秀）。
+      3. 练习建议: 给出简洁的练习建议。
+      
+      要求: 语气极简、专业且有启发性。总字数控制在 100 字以内。必须使用中文回答。
+    `;
+
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "glm-4",
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+            const data = await response.json();
+            return data.choices[0].message.content || "保持练习，专注力会持续提升！";
+        } catch (error) {
+            console.error("GLM Schulte Analysis Error:", error);
+            return "练习是提升专注力的关键，继续加油！";
+        }
+    }
 }

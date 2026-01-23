@@ -34,6 +34,13 @@ export interface SessionHistory {
   tasksCompleted: number;
 }
 
+export interface SchulteResult {
+  id: string;
+  timestamp: number;
+  timeTaken: number; // in seconds
+  gridSize: number; // e.g., 5 for 5x5
+}
+
 export enum TimerMode {
   WORK = '专注时间',
   SHORT_BREAK = '短休时间',
@@ -55,6 +62,7 @@ export interface TimerState {
 export interface IAIService {
   getEndDayReview(tasks: Task[]): Promise<string>;
   getTaskPrioritySuggestion(tasks: Task[]): Promise<string[]>;
+  getSchulteFocusAnalysis(results: SchulteResult[]): Promise<string>;
 }
 
 export type AIProvider = 'gemini' | 'deepseek' | 'glm';

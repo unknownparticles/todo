@@ -4,11 +4,12 @@ import TodoList from './components/TodoList';
 import Pomodoro from './components/Pomodoro';
 import Calendar from './components/Calendar';
 import Statistics from './components/Statistics';
-import { Task, Priority, SessionHistory, TimerSettings, TimerMode, FocusTarget, AppTheme, AppMode, AISettings, IAIService } from './types';
+import SchulteGrid from './components/SchulteGrid';
+import { Task, Priority, SessionHistory, TimerSettings, TimerMode, FocusTarget, AppTheme, AppMode, AISettings, IAIService, SchulteResult } from './types';
 import { getAIService } from './services/factory';
 import SettingsModal from './components/SettingsModal';
 
-type Tab = 'todo' | 'pomodoro' | 'calendar' | 'stats';
+type Tab = 'todo' | 'pomodoro' | 'calendar' | 'stats' | 'schulte';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -27,6 +28,11 @@ const App: React.FC = () => {
 
   const [history, setHistory] = useState<SessionHistory[]>(() => {
     const saved = localStorage.getItem('zenflow_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [schulteHistory, setSchulteHistory] = useState<SchulteResult[]>(() => {
+    const saved = localStorage.getItem('zenflow_schulte_history');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -81,6 +87,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('zenflow_timer_settings', JSON.stringify(timerSettings));
   }, [timerSettings]);
+
+  useEffect(() => {
+    localStorage.setItem('zenflow_schulte_history', JSON.stringify(schulteHistory));
+  }, [schulteHistory]);
 
   useEffect(() => {
     localStorage.setItem('zenflow_ai_settings', JSON.stringify(aiSettings));
@@ -231,6 +241,7 @@ const App: React.FC = () => {
         {activeTab === 'todo' && <TodoList tasks={tasks} onAddTask={addTask} onToggleTask={toggleTask} onDeleteTask={deleteTask} onAddSubtask={addSubtask} onToggleSubtask={toggleSubtask} onClearCompleted={clearCompletedTasks} onSetFocus={(t) => { setFocusTarget(t); setActiveTab('pomodoro'); }} />}
         {activeTab === 'pomodoro' && <div className="pt-2 pb-6"><Pomodoro focusedTarget={focusTarget} settings={timerSettings} onSettingsChange={setTimerSettings} onSessionComplete={handleSessionComplete} /></div>}
         {activeTab === 'calendar' && <Calendar tasks={tasks} />}
+        {activeTab === 'schulte' && <SchulteGrid history={schulteHistory} onSaveResult={(res) => setSchulteHistory([...schulteHistory, res])} aiSettings={aiSettings} />}
         {activeTab === 'stats' && (
           <div className="space-y-6 pb-6">
             <Statistics tasks={tasks} history={history} />
@@ -268,6 +279,7 @@ const App: React.FC = () => {
         {[
           { id: 'todo', label: '待办', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
           { id: 'pomodoro', label: '计时', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+          { id: 'schulte', label: '专注', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
           { id: 'calendar', label: '日历', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
           { id: 'stats', label: '成就', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' }
         ].map(tab => (
