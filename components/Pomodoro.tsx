@@ -108,14 +108,19 @@ const Pomodoro: React.FC<PomodoroProps> = ({ focusedTarget, settings, onSessionC
                 <h3 className="text-base font-bold text-main px-4 line-clamp-1">{focusedTarget.text}</h3>
               </div>
             ) : (
-              <p className="text-xs font-bold text-muted opacity-40 italic tracking-tight">Focus on your flow.</p>
+              <p className="text-xs font-bold text-muted opacity-40 italic tracking-tight">保持专注，进入心流。</p>
             )}
           </div>
 
-          <div className="flex bg-main/5 p-1 rounded-full scale-90">
-            {Object.values(TimerMode).map(mode => (
-              <button key={mode} onClick={() => switchMode(mode)} className={`px-5 py-2 rounded-full text-[10px] font-black transition-all ${state.mode === mode ? 'bg-surface shadow-sm text-brand-primary' : 'text-muted hover:text-main'}`}>
-                {mode === TimerMode.WORK ? '专注' : '休息'}
+          <div className="flex bg-main/5 p-1 rounded-2xl w-full">
+            {[TimerMode.WORK, TimerMode.SHORT_BREAK, TimerMode.LONG_BREAK].map(mode => (
+              <button
+                key={mode}
+                onClick={() => switchMode(mode)}
+                className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all flex flex-col items-center justify-center space-y-0.5 ${state.mode === mode ? 'bg-surface shadow-sm text-brand-primary' : 'text-muted hover:text-main'}`}
+              >
+                <span>{mode === TimerMode.WORK ? '专注' : mode === TimerMode.SHORT_BREAK ? '短休' : '长休'}</span>
+                <span className="text-[8px] opacity-60 font-bold">{settings[mode]}分钟</span>
               </button>
             ))}
           </div>

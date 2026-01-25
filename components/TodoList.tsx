@@ -187,7 +187,7 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
                       onClick={() => onToggleTask(task.id)}
                       className={`mt-0.5 w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${task.completed ? 'bg-brand-primary border-brand-primary text-surface' : 'border-main/10 group-hover:border-brand-primary/40'}`}
                     >
-                      {task.completed && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
+                      {task.completed && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
                     </button>
                     <div className="ml-4">
                       <h3 className={`font-bold text-main leading-tight transition-all ${task.completed ? 'line-through opacity-40' : ''}`}>{task.text}</h3>
@@ -207,10 +207,11 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
                           setTimeout(() => setIsExplodingId(null), 1000);
                         }}
                         disabled={isExplodingId === task.id}
-                        className={`p-2 text-brand-primary hover:bg-brand-primary/5 rounded-xl transition-all ${isExplodingId === task.id ? 'animate-bounce' : ''}`}
+                        className={`px-3 py-1.5 bg-brand-primary/5 text-brand-primary hover:bg-brand-primary/10 rounded-full transition-all flex items-center space-x-1.5 ${isExplodingId === task.id ? 'animate-bounce' : ''}`}
                         title="任务爆炸 (AI 拆解)"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        <span className="text-sm">💥</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">任务爆炸</span>
                       </button>
                     )}
                     {task.subtasks.length === 0 && (
@@ -247,8 +248,12 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
                 <div className={`mt-5 ml-10 space-y-3 transition-all ${task.completed ? 'opacity-30' : ''} ${isExplodingId === task.id ? 'task-explosion-active' : ''}`}>
                   {task.subtasks.map(sub => (
                     <div key={sub.id} className="flex items-center group/sub">
-                      <button onClick={() => onToggleSubtask(task.id, sub.id)} className={`w-4.5 h-4.5 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all ${sub.completed ? 'bg-brand-primary border-brand-primary text-surface' : 'border-main/5 hover:border-brand-primary/20'}`}>
-                        {sub.completed && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
+                      <button
+                        onClick={() => onToggleSubtask(task.id, sub.id)}
+                        className={`w-5 h-5 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all ${sub.completed ? 'bg-brand-primary border-brand-primary text-surface' : 'border-main/10 hover:border-brand-primary/20'}`}
+                      >
+                        {/* 强制显式设置颜色确保在深浅模式下勾选可见 */}
+                        {sub.completed && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
                       </button>
                       <span className={`flex-1 ml-3 text-xs font-semibold text-main/80 ${sub.completed ? 'line-through opacity-40' : ''}`}>{sub.text}</span>
                       <button
