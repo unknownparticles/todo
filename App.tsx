@@ -19,8 +19,18 @@ const App: React.FC = () => {
     const lastVisit = localStorage.getItem('zenflow_last_visit');
 
     if (lastVisit && lastVisit !== todayStr) {
-      // 隔天自动清除所有已完成
-      loadedTasks = loadedTasks.filter(t => !t.completed);
+      // 隔天自动清除所有已完成项目
+      const prevDate = new Date(lastVisit);
+      const year = prevDate.getFullYear();
+      const month = prevDate.getMonth() + 1;
+      const day = prevDate.getDate();
+      const legacyNote = ` (${year}年${month}月${day}日遗留)`;
+      loadedTasks = loadedTasks
+        .filter(t => !t.completed)
+        .map(t => ({
+          ...t,
+          text: t.text.includes('遗留)') ? t.text : t.text + legacyNote
+        }));
     }
     localStorage.setItem('zenflow_last_visit', todayStr);
     return loadedTasks;
@@ -140,6 +150,60 @@ const App: React.FC = () => {
     if (focusTarget?.id === id || focusTarget?.parentId === id) setFocusTarget(null);
   };
 
+  const updateTask = (id: string, updates: Partial<Task>) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  const explodeTask = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const service = getAIService(aiSettings);
+    if (!service) return;
+
+    try {
+      const subtasksTexts = await service.explodeTask(task.text, task.description);
+      if (subtasksTexts.length > 0) {
+        setTasks(tasks.map(t => t.id === taskId ? {
+          ...t,
+          subtasks: [
+            ...t.subtasks,
+            ...subtasksTexts.map(text => ({ id: crypto.randomUUID(), text, completed: false }))
+          ]
+        } : t));
+      }
+    } catch (error) {
+      console.error("Explode task failed", error);
+    }
+  };
+
+  const smartReorder = async () => {
+    const service = getAIService(aiSettings);
+    if (!service) return;
+
+    try {
+      const orderedIds = await service.reorderTasks(tasks);
+      const taskMap = new Map(tasks.map(t => [t.id, t] as [string, Task]));
+      const reordered: Task[] = [];
+      const seen = new Set<string>();
+
+      orderedIds.forEach(id => {
+        if (taskMap.has(id)) {
+          reordered.push(taskMap.get(id)!);
+          seen.add(id);
+        }
+      });
+
+      tasks.forEach(t => {
+        if (!seen.has(t.id)) reordered.push(t);
+      });
+
+      setTasks(reordered);
+    } catch (error) {
+      console.error("Smart reorder failed", error);
+    }
+  };
+
   const clearCompletedTasks = () => {
     setTasks(tasks.filter(t => !t.completed));
   };
@@ -238,7 +302,21 @@ const App: React.FC = () => {
       )}
 
       <main className="flex-1">
-        {activeTab === 'todo' && <TodoList tasks={tasks} onAddTask={addTask} onToggleTask={toggleTask} onDeleteTask={deleteTask} onAddSubtask={addSubtask} onToggleSubtask={toggleSubtask} onClearCompleted={clearCompletedTasks} onSetFocus={(t) => { setFocusTarget(t); setActiveTab('pomodoro'); }} />}
+        {activeTab === 'todo' && (
+          <TodoList
+            tasks={tasks}
+            onAddTask={addTask}
+            onToggleTask={toggleTask}
+            onDeleteTask={deleteTask}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+            onClearCompleted={clearCompletedTasks}
+            onSetFocus={(t) => { setFocusTarget(t); setActiveTab('pomodoro'); }}
+            onUpdateTask={updateTask}
+            onExplodeTask={explodeTask}
+            onSmartReorder={smartReorder}
+          />
+        )}
         {activeTab === 'pomodoro' && <div className="pt-2 pb-6"><Pomodoro focusedTarget={focusTarget} settings={timerSettings} onSettingsChange={setTimerSettings} onSessionComplete={handleSessionComplete} /></div>}
         {activeTab === 'calendar' && <Calendar tasks={tasks} />}
         {activeTab === 'schulte' && <SchulteGrid history={schulteHistory} onSaveResult={(res) => setSchulteHistory([...schulteHistory, res])} aiSettings={aiSettings} />}

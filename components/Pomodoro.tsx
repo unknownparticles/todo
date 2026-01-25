@@ -71,10 +71,10 @@ const Pomodoro: React.FC<PomodoroProps> = ({ focusedTarget, settings, onSessionC
   };
 
   return (
-    <div className="flex flex-col items-center justify-start space-y-8 p-8 bg-surface border border-main/5 rounded-[3rem] w-full max-w-sm mx-auto relative overflow-hidden transition-all duration-500 shadow-sm">
+    <div className="flex flex-col items-center justify-start space-y-4 p-6 bg-surface border border-main/5 rounded-[2.5rem] w-full max-w-sm mx-auto relative overflow-hidden transition-all duration-500 shadow-sm">
       <button
         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-        className="absolute top-8 right-8 p-2 text-muted/30 hover:text-brand-primary transition-colors"
+        className="absolute top-6 right-6 p-2 text-muted/30 hover:text-brand-primary transition-colors z-20"
       >
         <svg className={`w-5 h-5 transition-transform duration-700 ${isSettingsOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
       </button>
@@ -101,18 +101,18 @@ const Pomodoro: React.FC<PomodoroProps> = ({ focusedTarget, settings, onSessionC
         </div>
       ) : (
         <>
-          <div className="text-center min-h-[4.5rem]">
+          <div className="text-center min-h-[3.5rem] flex flex-col justify-center">
             {focusedTarget ? (
               <div className="animate-in fade-in duration-700">
-                <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mb-2">专注中</p>
-                <h3 className="text-lg font-bold text-main px-4">{focusedTarget.text}</h3>
+                <p className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] mb-1">专注中</p>
+                <h3 className="text-base font-bold text-main px-4 line-clamp-1">{focusedTarget.text}</h3>
               </div>
             ) : (
-              <p className="text-sm font-bold text-muted opacity-40 italic tracking-tight">准备好进入心流了吗？</p>
+              <p className="text-xs font-bold text-muted opacity-40 italic tracking-tight">Focus on your flow.</p>
             )}
           </div>
 
-          <div className="flex bg-main/5 p-1 rounded-full">
+          <div className="flex bg-main/5 p-1 rounded-full scale-90">
             {Object.values(TimerMode).map(mode => (
               <button key={mode} onClick={() => switchMode(mode)} className={`px-5 py-2 rounded-full text-[10px] font-black transition-all ${state.mode === mode ? 'bg-surface shadow-sm text-brand-primary' : 'text-muted hover:text-main'}`}>
                 {mode === TimerMode.WORK ? '专注' : '休息'}
@@ -120,13 +120,13 @@ const Pomodoro: React.FC<PomodoroProps> = ({ focusedTarget, settings, onSessionC
             ))}
           </div>
 
-          <div className="relative w-64 h-64 flex items-center justify-center">
+          <div className="relative w-56 h-56 flex items-center justify-center">
             <svg className="absolute w-full h-full transform -rotate-90">
               <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="1" fill="transparent" className="text-main/5" />
               <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="2" fill="transparent" strokeDasharray="283%" strokeDashoffset={`${283 - (283 * progress) / 100}%`} className={`transition-all duration-1000 ease-linear ${state.mode === TimerMode.WORK ? 'text-brand-primary' : 'text-brand-secondary'}`} strokeLinecap="round" />
             </svg>
             <div className="text-center z-10">
-              <span className="text-6xl font-black tracking-tighter text-main tabular-nums leading-none">{formatTime(state.secondsLeft)}</span>
+              <span className="text-5xl font-black tracking-tighter text-main tabular-nums leading-none">{formatTime(state.secondsLeft)}</span>
             </div>
           </div>
 

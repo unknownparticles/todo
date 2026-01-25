@@ -31,7 +31,7 @@ export class GeminiService extends BaseAIService {
 
     try {
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: prompt,
       });
       return response.text || "保持动力，明天又是新的一天！";
@@ -82,13 +82,58 @@ export class GeminiService extends BaseAIService {
 
     try {
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: prompt,
       });
       return response.text || "保持练习，专注力会持续提升！";
     } catch (error) {
       console.error("Gemini Schulte Analysis Error:", error);
       return "练习是提升专注力的关键，继续加油！";
+    }
+  }
+
+  async explodeTask(taskText: string, description?: string): Promise<string[]> {
+    const prompt = `将任务 "${taskText}" 拆分为 3-5 个具体的子任务。描述背景: ${description || '无'}。请确保子任务清晰、可操作。返回为简单的 JSON 字符串数组。`;
+    try {
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        }
+      });
+      return JSON.parse(response.text.trim());
+    } catch (error) {
+      console.error("Gemini Explode Error:", error);
+      return [];
+    }
+  }
+
+  async reorderTasks(tasks: Task[]): Promise<string[]> {
+    const taskInfo = tasks.filter(t => !t.completed).map(t => `ID: ${t.id}, 内容: ${t.text}, 优先级: ${t.priority}`).join('\n');
+    if (!taskInfo) return tasks.map(t => t.id);
+
+    const prompt = `根据任务的逻辑继承关系和优先级，对以下任务进行最优排序建议。返回有序的 ID 数组 JSON。\n\n${taskInfo}`;
+    try {
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        }
+      });
+      return JSON.parse(response.text.trim());
+    } catch (error) {
+      console.error("Gemini Reorder Error:", error);
+      return tasks.map(t => t.id);
     }
   }
 }

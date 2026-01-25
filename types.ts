@@ -19,6 +19,7 @@ export interface Task {
   tags: string[];
   subtasks: Subtask[];
   focusTime: number;
+  description?: string;
 }
 
 export type FocusTarget = {
@@ -63,6 +64,8 @@ export interface IAIService {
   getEndDayReview(tasks: Task[]): Promise<string>;
   getTaskPrioritySuggestion(tasks: Task[]): Promise<string[]>;
   getSchulteFocusAnalysis(results: SchulteResult[]): Promise<string>;
+  explodeTask(taskText: string, description?: string): Promise<string[]>;
+  reorderTasks(tasks: Task[]): Promise<string[]>; // Returns list of task IDs in new order
 }
 
 export type AIProvider = 'gemini' | 'deepseek' | 'glm';

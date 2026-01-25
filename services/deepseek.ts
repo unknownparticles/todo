@@ -107,4 +107,55 @@ export class DeepSeekService extends BaseAIService {
             return "练习是提升专注力的关键，继续加油！";
         }
     }
+
+    async explodeTask(taskText: string, description?: string): Promise<string[]> {
+        const prompt = `将任务 "${taskText}" 拆分为 3-5 个具体的子任务。描述背景: ${description || '无'}。请确保子任务清晰、可操作。只返回 JSON 字符串数组格式，不要有其他解释文字。`;
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "deepseek-chat",
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+            const data = await response.json();
+            const text = data.choices[0].message.content;
+            const jsonMatch = text.match(/\[.*\]/s);
+            return jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+        } catch (error) {
+            console.error("DeepSeek Explode Error:", error);
+            return [];
+        }
+    }
+
+    async reorderTasks(tasks: Task[]): Promise<string[]> {
+        const taskInfo = tasks.filter(t => !t.completed).map(t => `ID: ${t.id}, 内容: ${t.text}, 优先级: ${t.priority}`).join('\n');
+        if (!taskInfo) return tasks.map(t => t.id);
+
+        const prompt = `根据任务的逻辑继承关系和优先级，对以下任务进行最优排序建议。只返回有序的 ID 数组 JSON 格式。\n\n${taskInfo}`;
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "deepseek-chat",
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+            const data = await response.json();
+            const text = data.choices[0].message.content;
+            const jsonMatch = text.match(/\[.*\]/s);
+            return jsonMatch ? JSON.parse(jsonMatch[0]) : tasks.map(t => t.id);
+        } catch (error) {
+            console.error("DeepSeek Reorder Error:", error);
+            return tasks.map(t => t.id);
+        }
+    }
 }

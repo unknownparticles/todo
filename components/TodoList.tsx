@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Task, Priority, Subtask, FocusTarget } from '../types';
 
 interface TodoListProps {
@@ -11,15 +11,21 @@ interface TodoListProps {
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onClearCompleted: () => void;
   onSetFocus: (target: FocusTarget) => void;
+  onUpdateTask: (id: string, updates: Partial<Task>) => void;
+  onExplodeTask: (id: string) => Promise<void>;
+  onSmartReorder: () => Promise<void>;
 }
 
-const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onDeleteTask, onAddSubtask, onToggleSubtask, onClearCompleted, onSetFocus }) => {
+const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onDeleteTask, onAddSubtask, onToggleSubtask, onClearCompleted, onSetFocus, onUpdateTask, onExplodeTask, onSmartReorder }) => {
   const [inputValue, setInputValue] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
   const [swipingId, setSwipingId] = useState<string | null>(null);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  
+  const [isExplodingId, setIsExplodingId] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+  const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
+
   const stats = useMemo(() => {
     let total = 0;
     let completed = 0;
@@ -31,7 +37,7 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
         if (st.completed) completed++;
       });
     });
-    return { 
+    return {
       percentage: total ? Math.round((completed / total) * 100) : 0,
       unfinishedCount: tasks.filter(t => !t.completed).length
     };
@@ -99,18 +105,32 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
               <span className="text-xs text-muted font-bold tracking-tight">已完成今日目标</span>
             </div>
           </div>
-          <button 
-            onClick={onClearCompleted}
-            className="text-[10px] font-bold text-muted hover:text-main transition-colors uppercase tracking-widest bg-main/5 px-3 py-1.5 rounded-full"
-          >
-            清理完成项
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={async () => {
+                setIsReordering(true);
+                await onSmartReorder();
+                setIsReordering(false);
+              }}
+              disabled={isReordering || tasks.length < 2}
+              className={`text-[10px] font-bold text-brand-primary hover:text-main transition-all uppercase tracking-widest bg-brand-primary/10 px-3 py-1.5 rounded-full flex items-center space-x-1 ${isReordering ? 'animate-pulse' : ''}`}
+            >
+              <svg className={`w-3 h-3 ${isReordering ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              <span>{isReordering ? '排序中...' : '智能排序'}</span>
+            </button>
+            <button
+              onClick={onClearCompleted}
+              className="text-[10px] font-bold text-muted hover:text-main transition-colors uppercase tracking-widest bg-main/5 px-3 py-1.5 rounded-full"
+            >
+              清理完成项
+            </button>
+          </div>
         </div>
         <div className="w-full bg-main/5 h-1.5 rounded-full overflow-hidden">
           <div className="bg-brand-primary h-full transition-all duration-1000 ease-out" style={{ width: `${stats.percentage}%` }} />
         </div>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative group">
           <input
@@ -147,11 +167,10 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
             return b.createdAt - a.createdAt;
           })
           .map(task => (
-            <div 
-              key={task.id} 
-              className={`group rounded-3xl border transition-all duration-500 relative overflow-hidden touch-pan-y ${
-                task.completed ? 'bg-main/5 border-transparent opacity-50' : 'bg-surface border-main/5'
-              }`}
+            <div
+              key={task.id}
+              className={`group rounded-3xl border transition-all duration-500 relative overflow-hidden touch-pan-y ${task.completed ? 'bg-main/5 border-transparent opacity-50' : 'bg-surface border-main/5'
+                }`}
               onTouchStart={(e) => handleTouchStart(e, task.id)}
               onTouchEnd={(e) => handleTouchEnd(e, task.id, task.completed)}
             >
@@ -164,8 +183,8 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
               <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start flex-1">
-                    <button 
-                      onClick={() => onToggleTask(task.id)} 
+                    <button
+                      onClick={() => onToggleTask(task.id)}
                       className={`mt-0.5 w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${task.completed ? 'bg-brand-primary border-brand-primary text-surface' : 'border-main/10 group-hover:border-brand-primary/40'}`}
                     >
                       {task.completed && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
@@ -180,6 +199,20 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
                     </div>
                   </div>
                   <div className="flex items-center space-x-1">
+                    {!task.completed && (
+                      <button
+                        onClick={async () => {
+                          setIsExplodingId(task.id);
+                          await onExplodeTask(task.id);
+                          setTimeout(() => setIsExplodingId(null), 1000);
+                        }}
+                        disabled={isExplodingId === task.id}
+                        className={`p-2 text-brand-primary hover:bg-brand-primary/5 rounded-xl transition-all ${isExplodingId === task.id ? 'animate-bounce' : ''}`}
+                        title="任务爆炸 (AI 拆解)"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      </button>
+                    )}
                     {task.subtasks.length === 0 && (
                       <button onClick={() => onSetFocus({ type: 'task', id: task.id, text: task.text })} className="p-2 text-brand-primary hover:bg-brand-primary/5 rounded-xl transition-all">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -191,15 +224,35 @@ const TodoList: React.FC<TodoListProps> = ({ tasks, onAddTask, onToggleTask, onD
                   </div>
                 </div>
 
-                <div className={`mt-5 ml-10 space-y-3 transition-all ${task.completed ? 'opacity-30' : ''}`}>
+                <div className="ml-10 mt-1">
+                  {editingDescriptionId === task.id ? (
+                    <textarea
+                      autoFocus
+                      onBlur={() => setEditingDescriptionId(null)}
+                      value={task.description || ''}
+                      onChange={(e) => onUpdateTask(task.id, { description: e.target.value })}
+                      placeholder="添加任务描述（AI 拆解将参考此内容）..."
+                      className="w-full bg-main/5 rounded-xl p-3 text-[10px] font-medium text-main border-none focus:ring-1 focus:ring-brand-primary/20 placeholder:text-muted/30 min-h-[60px]"
+                    />
+                  ) : (
+                    <p
+                      onClick={() => !task.completed && setEditingDescriptionId(task.id)}
+                      className={`text-[10px] font-medium text-muted/60 cursor-pointer hover:text-main transition-colors ${task.completed ? 'pointer-events-none' : ''}`}
+                    >
+                      {task.description || (!task.completed ? '+ 添加描述 (可选)' : '')}
+                    </p>
+                  )}
+                </div>
+
+                <div className={`mt-5 ml-10 space-y-3 transition-all ${task.completed ? 'opacity-30' : ''} ${isExplodingId === task.id ? 'task-explosion-active' : ''}`}>
                   {task.subtasks.map(sub => (
                     <div key={sub.id} className="flex items-center group/sub">
                       <button onClick={() => onToggleSubtask(task.id, sub.id)} className={`w-4.5 h-4.5 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all ${sub.completed ? 'bg-brand-primary border-brand-primary text-surface' : 'border-main/5 hover:border-brand-primary/20'}`}>
                         {sub.completed && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
                       </button>
                       <span className={`flex-1 ml-3 text-xs font-semibold text-main/80 ${sub.completed ? 'line-through opacity-40' : ''}`}>{sub.text}</span>
-                      <button 
-                        onClick={() => onSetFocus({ type: 'subtask', id: sub.id, parentId: task.id, text: sub.text })} 
+                      <button
+                        onClick={() => onSetFocus({ type: 'subtask', id: sub.id, parentId: task.id, text: sub.text })}
                         className="opacity-0 group-hover/sub:opacity-100 text-brand-primary p-1.5 rounded-lg hover:bg-brand-primary/10 transition-all"
                         title="专注子任务"
                       >

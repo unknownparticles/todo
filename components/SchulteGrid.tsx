@@ -97,30 +97,30 @@ const SchulteGrid: React.FC<SchulteGridProps> = ({ history, onSaveResult, aiSett
     };
 
     return (
-        <div className="px-6 space-y-8 animate-in fade-in duration-700">
-            <div className="flex flex-col items-center text-center space-y-2">
-                <h2 className="text-2xl font-black text-main tracking-tight">舒尔特方格</h2>
-                <p className="text-xs text-muted font-bold uppercase tracking-widest">请按顺序点击数字 1-25</p>
+        <div className="px-6 space-y-4 pb-6 animate-in fade-in duration-700">
+            <div className="flex flex-col items-center text-center space-y-1">
+                <h2 className="text-xl font-black text-main tracking-tight">舒尔特方格</h2>
+                <p className="text-[10px] text-muted font-bold uppercase tracking-widest">请按顺序点击数字 1-25</p>
             </div>
 
-            <div className="flex justify-between items-center bg-surface p-4 rounded-3xl border border-main/5 px-8">
+            <div className="flex justify-between items-center bg-surface p-3 rounded-2xl border border-main/5 px-6">
                 <div className="text-center">
-                    <p className="text-[10px] text-muted font-black uppercase tracking-tighter">当前目标</p>
-                    <p className="text-2xl font-black text-brand-primary">{status === 'finished' ? '✓' : nextNumber}</p>
+                    <p className="text-[9px] text-muted font-black uppercase tracking-tighter">当前目标</p>
+                    <p className="text-xl font-black text-brand-primary">{status === 'finished' ? '✓' : nextNumber}</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-[10px] text-muted font-black uppercase tracking-tighter">用时</p>
-                    <p className="text-2xl font-black text-main font-mono">{currentTime.toFixed(1)}s</p>
+                    <p className="text-[9px] text-muted font-black uppercase tracking-tighter">用时</p>
+                    <p className="text-xl font-black text-main font-mono">{currentTime.toFixed(1)}s</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-2 aspect-square max-w-md mx-auto">
+            <div className="grid grid-cols-5 gap-1.5 aspect-square max-w-[320px] mx-auto">
                 {grid.map((num) => (
                     <button
                         key={num}
                         onClick={() => handleNumberClick(num)}
                         className={`
-              aspect-square flex items-center justify-center text-xl font-bold rounded-2xl transition-all duration-200
+              aspect-square flex items-center justify-center text-lg font-bold rounded-xl transition-all duration-200
               ${num < nextNumber ? 'bg-brand-primary/10 text-brand-primary/40' : 'bg-surface border border-main/5 text-main active:scale-90 hover:border-brand-primary/30'}
               ${status === 'finished' && 'opacity-50 pointer-events-none'}
             `}

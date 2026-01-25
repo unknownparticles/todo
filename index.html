@@ -91,6 +91,21 @@
     input:focus {
       outline: none;
     }
+
+    /* Task Explosion Animation */
+    @keyframes taskExplode {
+      0% { transform: scale(1); filter: brightness(1) blur(0); }
+      20% { transform: scale(0.98) rotate(-1deg); filter: brightness(1.2); }
+      50% { transform: scale(1.05) rotate(1deg); filter: brightness(1.5) blur(1px); }
+      80% { transform: scale(0.98) rotate(-1deg); filter: brightness(1.2); }
+      100% { transform: scale(1); filter: brightness(1) blur(0); }
+    }
+
+    .task-explosion-active {
+      animation: taskExplode 0.4s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(var(--brand-primary), 0.3);
+      border-color: rgb(var(--brand-primary)) !important;
+    }
   </style>
   <script type="importmap">
     {
